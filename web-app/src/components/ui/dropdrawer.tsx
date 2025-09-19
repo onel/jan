@@ -30,6 +30,10 @@ import {
 import { cn } from '@/lib/utils'
 import { useSmallScreen } from '@/hooks/useMediaQuery'
 
+/**
+ * Animation configuration for mobile drawer transitions
+ * Defines enter, center, and exit states with smooth transitions
+ */
 const ANIMATION_CONFIG = {
   variants: {
     enter: (direction: 'forward' | 'backward') => ({
@@ -51,6 +55,14 @@ const ANIMATION_CONFIG = {
   },
 } as const
 
+/**
+ * Generates CSS classes for mobile item styling based on context and state
+ * @param isInsideGroup - Whether the item is inside a group container
+ * @param inset - Whether the item should have left padding
+ * @param variant - Visual variant of the item (e.g., 'destructive')
+ * @param disabled - Whether the item is disabled
+ * @returns Combined CSS class string
+ */
 const getMobileItemStyles = (
   isInsideGroup: boolean,
   inset?: boolean,
@@ -67,10 +79,18 @@ const getMobileItemStyles = (
   )
 }
 
+/**
+ * Context for sharing mobile/desktop state throughout the DropDrawer component tree
+ */
 const DropDrawerContext = React.createContext<{ isMobile: boolean }>({
   isMobile: false,
 })
 
+/**
+ * Hook to access the DropDrawer context
+ * @throws Error if used outside of DropDrawer context
+ * @returns Context value containing mobile state
+ */
 const useDropDrawerContext = () => {
   const context = React.useContext(DropDrawerContext)
   if (!context) {
@@ -81,9 +101,19 @@ const useDropDrawerContext = () => {
   return context
 }
 
+/**
+ * Hook for selecting appropriate components based on mobile/desktop context
+ * @returns Object with mobile state and component selection function
+ */
 const useComponentSelection = () => {
   const { isMobile } = useDropDrawerContext()
 
+  /**
+   * Selects the appropriate component based on mobile state
+   * @param mobileComponent - Component to use on mobile
+   * @param desktopComponent - Component to use on desktop
+   * @returns The selected component
+   */
   const selectComponent = <T, D>(mobileComponent: T, desktopComponent: D) => {
     return isMobile ? mobileComponent : desktopComponent
   }
@@ -91,7 +121,16 @@ const useComponentSelection = () => {
   return { isMobile, selectComponent }
 }
 
+/**
+ * Hook for detecting if an element is inside a DropDrawer group
+ * @returns Object with group detection utilities
+ */
 const useGroupDetection = () => {
+  /**
+   * Checks if an element is inside a DropDrawer group by traversing the DOM tree
+   * @param element - The element to check
+   * @returns True if the element is inside a group
+   */
   const isInGroup = React.useCallback(
     (element: HTMLElement | null): boolean => {
       if (!element) return false
@@ -108,6 +147,10 @@ const useGroupDetection = () => {
     []
   )
 
+  /**
+   * Hook that manages group state for a component
+   * @returns Object with ref and group state
+   */
   const useGroupState = () => {
     const { isMobile } = useComponentSelection()
     const itemRef = React.useRef<HTMLDivElement>(null)
@@ -131,11 +174,19 @@ const useGroupDetection = () => {
   return { isInGroup, useGroupState }
 }
 
+/**
+ * Type for conditional component props that can be either mobile or desktop specific
+ */
 type ConditionalComponentProps<T, D> = {
   children: React.ReactNode
   className?: string
 } & (T | D)
 
+/**
+ * Generic component that renders different components based on mobile/desktop context
+ * @param props - Component props including mobile and desktop component types
+ * @returns The appropriate component for the current context
+ */
 const ConditionalComponent = <T, D>({
   mobileComponent,
   desktopComponent,
@@ -152,6 +203,11 @@ const ConditionalComponent = <T, D>({
   return <Component {...props}>{children}</Component>
 }
 
+/**
+ * Main DropDrawer component that renders as a Drawer on mobile and DropdownMenu on desktop
+ * @param props - Props for either Drawer or DropdownMenu depending on screen size
+ * @returns Adaptive dropdown/drawer component
+ */
 function DropDrawer({
   children,
   ...props
@@ -174,6 +230,11 @@ function DropDrawer({
   )
 }
 
+/**
+ * Trigger component that adapts between DrawerTrigger and DropdownMenuTrigger
+ * @param props - Props for either DrawerTrigger or DropdownMenuTrigger
+ * @returns Adaptive trigger component
+ */
 function DropDrawerTrigger({
   className,
   children,
@@ -194,6 +255,11 @@ function DropDrawerTrigger({
   )
 }
 
+/**
+ * Content component that handles both drawer and dropdown content with submenu navigation
+ * @param props - Props for either DrawerContent or DropdownMenuContent
+ * @returns Adaptive content component with submenu support
+ */
 function DropDrawerContent({
   className,
   children,
@@ -217,7 +283,11 @@ function DropDrawerContent({
     new Map()
   )
 
-  // Function to navigate to a submenu
+  /**
+   * Navigates to a submenu with forward animation
+   * @param id - The submenu ID to navigate to
+   * @param title - The title to display for the submenu
+   */
   const navigateToSubmenu = React.useCallback((id: string, title: string) => {
     // Set animation direction to forward when navigating to a submenu
     setAnimationDirection('forward')
@@ -226,7 +296,9 @@ function DropDrawerContent({
     setSubmenuStack((prev) => [...prev, { id, title }])
   }, [])
 
-  // Function to go back to previous menu
+  /**
+   * Navigates back to the previous menu level with backward animation
+   */
   const goBack = React.useCallback(() => {
     // Set animation direction to backward when going back
     setAnimationDirection('backward')
@@ -247,7 +319,11 @@ function DropDrawerContent({
     }
   }, [submenuStack])
 
-  // Function to register submenu content
+  /**
+   * Registers submenu content for later rendering
+   * @param id - The submenu ID
+   * @param content - The content nodes to register
+   */
   const registerSubmenuContent = React.useCallback(
     (id: string, content: React.ReactNode[]) => {
       submenuContentRef.current.set(id, content)
@@ -255,6 +331,12 @@ function DropDrawerContent({
     []
   )
 
+  /**
+   * Extracts submenu content from React children by searching for matching submenu ID
+   * @param elements - The React elements to search through
+   * @param targetId - The submenu ID to find content for
+   * @returns Array of React nodes that belong to the target submenu
+   */
   const extractSubmenuContent = React.useCallback(
     (elements: React.ReactNode, targetId: string): React.ReactNode[] => {
       const result: React.ReactNode[] = []
@@ -304,7 +386,11 @@ function DropDrawerContent({
     []
   )
 
-  // Get submenu content (always extract fresh to reflect state changes)
+  /**
+   * Gets fresh submenu content for the specified ID
+   * @param id - The submenu ID to get content for
+   * @returns Array of React nodes for the submenu
+   */
   const getSubmenuContent = React.useCallback(
     (id: string) => {
       // Always extract fresh content to ensure state changes are reflected
@@ -437,6 +523,11 @@ function DropDrawerContent({
   )
 }
 
+/**
+ * Item component that adapts between mobile drawer item and desktop dropdown menu item
+ * @param props - Props including icon, variant, and standard menu item properties
+ * @returns Adaptive menu item component
+ */
 function DropDrawerItem({
   className,
   children,
@@ -455,6 +546,10 @@ function DropDrawerItem({
   const { itemRef, isInsideGroup } = useGroupState()
 
   if (isMobile) {
+    /**
+     * Handles click events for mobile items with special logic for icon interactions
+     * @param e - The mouse event
+     */
     const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
       if (disabled) return
 
@@ -537,6 +632,11 @@ function DropDrawerItem({
   )
 }
 
+/**
+ * Separator component that only renders on desktop (hidden on mobile)
+ * @param props - Standard separator props
+ * @returns Separator component or null on mobile
+ */
 function DropDrawerSeparator({
   className,
   ...props
@@ -556,6 +656,11 @@ function DropDrawerSeparator({
   )
 }
 
+/**
+ * Label component that adapts between DrawerTitle and DropdownMenuLabel
+ * @param props - Props for either DrawerTitle or DropdownMenuLabel
+ * @returns Adaptive label component
+ */
 function DropDrawerLabel({
   className,
   children,
@@ -593,6 +698,11 @@ function DropDrawerLabel({
   )
 }
 
+/**
+ * Footer component that renders as DrawerFooter on mobile and a div on desktop
+ * @param props - Props for either DrawerFooter or div element
+ * @returns Adaptive footer component
+ */
 function DropDrawerFooter({
   className,
   children,
@@ -624,6 +734,11 @@ function DropDrawerFooter({
   )
 }
 
+/**
+ * Group component that visually groups related items with separators on mobile
+ * @param props - Standard div props with children
+ * @returns Styled group container with automatic separators on mobile
+ */
 function DropDrawerGroup({
   className,
   children,
@@ -690,7 +805,9 @@ function DropDrawerGroup({
   )
 }
 
-// Context for managing submenu state on mobile
+/**
+ * Context type for managing submenu state and navigation
+ */
 interface SubmenuContextType {
   activeSubmenu: string | null
   setActiveSubmenu: (id: string | null) => void
@@ -700,6 +817,9 @@ interface SubmenuContextType {
   registerSubmenuContent?: (id: string, content: React.ReactNode[]) => void
 }
 
+/**
+ * Context for managing submenu state on mobile
+ */
 const SubmenuContext = React.createContext<SubmenuContextType>({
   activeSubmenu: null,
   setActiveSubmenu: () => {},
@@ -709,10 +829,16 @@ const SubmenuContext = React.createContext<SubmenuContextType>({
   registerSubmenuContent: undefined,
 })
 
-// Submenu components
-// Counter for generating simple numeric IDs
+/**
+ * Counter for generating unique submenu IDs
+ */
 let submenuIdCounter = 0
 
+/**
+ * Submenu container component that manages submenu content and navigation
+ * @param props - Props including optional id, title, and standard DropdownMenuSub props
+ * @returns Submenu container that handles mobile navigation and desktop dropdown behavior
+ */
 function DropDrawerSub({
   children,
   id,
@@ -804,6 +930,11 @@ function DropDrawerSub({
   return <DropdownMenuSub {...props}>{children}</DropdownMenuSub>
 }
 
+/**
+ * Submenu trigger component that navigates to submenu on mobile and shows dropdown on desktop
+ * @param props - Props including optional icon and standard DropdownMenuSubTrigger props
+ * @returns Adaptive submenu trigger with navigation functionality
+ */
 function DropDrawerSubTrigger({
   className,
   inset,
@@ -818,7 +949,10 @@ function DropDrawerSubTrigger({
   const { itemRef, isInsideGroup } = useGroupState()
 
   if (isMobile) {
-    // Find the parent submenu ID
+    /**
+     * Handles click events to navigate to the associated submenu
+     * @param e - The mouse event
+     */
     const handleClick = (e: React.MouseEvent) => {
       e.preventDefault()
       e.stopPropagation()
@@ -862,7 +996,10 @@ function DropDrawerSubTrigger({
       }
     }
 
-    // Combine onClick handlers
+    /**
+     * Combines the navigation handler with any existing onClick handler
+     * @param e - The mouse event
+     */
     const combinedOnClick = (e: React.MouseEvent) => {
       // Call the original onClick if provided
       const typedProps = props as Record<string, unknown>
@@ -908,6 +1045,11 @@ function DropDrawerSubTrigger({
   )
 }
 
+/**
+ * Submenu content component that contains the items shown when a submenu is active
+ * @param props - Props for DropdownMenuSubContent (hidden on mobile)
+ * @returns Submenu content container or null on mobile
+ */
 function DropDrawerSubContent({
   className,
   sideOffset = 4,
