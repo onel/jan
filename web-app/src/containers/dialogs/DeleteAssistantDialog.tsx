@@ -10,12 +10,23 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 
+/**
+ * Props for the DeleteAssistantDialog component
+ */
 interface DeleteAssistantDialogProps {
+  /** Whether the dialog is open */
   open: boolean
+  /** Callback function to handle dialog open state changes */
   onOpenChange: (open: boolean) => void
+  /** Callback function to handle confirmation action */
   onConfirm: () => void
 }
 
+/**
+ * A confirmation dialog for deleting an assistant
+ * @param props - The component props
+ * @returns The rendered dialog component
+ */
 export function DeleteAssistantDialog({
   open,
   onOpenChange,
@@ -24,14 +35,24 @@ export function DeleteAssistantDialog({
   const { t } = useTranslation()
   const deleteButtonRef = useRef<HTMLButtonElement>(null)
 
+  /**
+   * Handles the confirm action by calling the onConfirm callback
+   */
   const handleConfirm = () => {
     onConfirm()
   }
 
+  /**
+   * Handles the cancel action by closing the dialog
+   */
   const handleCancel = () => {
     onOpenChange(false)
   }
 
+  /**
+   * Handles keyboard events, triggering confirm on Enter key press
+   * @param e - The keyboard event
+   */
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       handleConfirm()
