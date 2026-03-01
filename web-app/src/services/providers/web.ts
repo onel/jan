@@ -13,7 +13,17 @@ import { PlatformFeatures } from '@/lib/platform/const'
 import { PlatformFeature } from '@/lib/platform/types'
 import { getModelCapabilities } from '@/lib/models'
 
+/**
+ * Web implementation of the ProvidersService interface.
+ * Handles provider management, model fetching, and settings updates in a web environment.
+ */
 export class WebProvidersService implements ProvidersService {
+  /**
+   * Retrieves all available providers including runtime and built-in providers.
+   * Combines providers from the EngineManager with predefined providers based on platform features.
+   * 
+   * @returns Promise that resolves to an array of ModelProvider objects
+   */
   async getProviders(): Promise<ModelProvider[]> {
     const runtimeProviders: ModelProvider[] = []
     for (const [providerName, value] of EngineManager.instance().engines) {
@@ -106,6 +116,14 @@ export class WebProvidersService implements ProvidersService {
     return runtimeProviders.concat(builtinProviders as ModelProvider[])
   }
 
+  /**
+   * Fetches available models from a specific provider's API endpoint.
+   * Handles various response formats and provides detailed error messages for different failure scenarios.
+   * 
+   * @param provider - The ModelProvider object containing base_url and optional api_key
+   * @returns Promise that resolves to an array of model ID strings
+   * @throws Error when provider lacks base_url, authentication fails, or API request fails
+   */
   async fetchModelsFromProvider(provider: ModelProvider): Promise<string[]> {
     if (!provider.base_url) {
       throw new Error('Provider must have base_url configured')
@@ -208,6 +226,14 @@ export class WebProvidersService implements ProvidersService {
     }
   }
 
+  /**
+   * Updates settings for a specific provider by name.
+   * Transforms ProviderSetting objects to SettingComponentProps format and applies them to the engine.
+   * 
+   * @param providerName - The name of the provider to update settings for
+   * @param settings - Array of ProviderSetting objects containing the new settings
+   * @returns Promise that resolves when settings are successfully updated
+   */
   async updateSettings(
     providerName: string,
     settings: ProviderSetting[]
@@ -229,6 +255,11 @@ export class WebProvidersService implements ProvidersService {
       )
   }
 
+  /**
+   * Returns the native fetch function for web environment.
+   * 
+   * @returns The browser's native fetch function
+   */
   fetch(): typeof fetch {
     // Web implementation uses regular fetch
     return fetch
